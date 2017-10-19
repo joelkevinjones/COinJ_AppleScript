@@ -10,7 +10,7 @@
 -- an attribute of xml:id="id".
 -- categories aren't a subclass of entry, but of item---double check their ids
 
--- TODO: use user event scripting to handle checking if a 
+-- TODO: use user event scripting to handle checking if a
 -- dialog box is open in Palm Desktop and close it before trying to do export,
 -- otherwise an error message is produced about apple event timing out
 -- and the output file is corrupted slightly.
@@ -171,12 +171,21 @@ on writeTagged(tagName, tagData)
 	return taggedData
 end writeTagged
 
+on getIDForEntry(theEntry)
+	local idString
+	set idString to id of theEntry
+	set idString to (class of theEntry as string) & idString
+	-- replace spaces with ""
+	return idString
+end getIDForEntry
+
 on writeLinkTo(tagName, theEntry)
 	local tag
 	local idString
 	if theEntry = missing value then return
 	tell application "Palm Desktop"
-		set idString to id of theEntry as string
+		set idString to getIDForEntry(theEntry) of me
+		display dialog "idString: " & idString
 		set tag to curIndent() of me & "<" & tagName & " xref=\"ID" & (get id of theEntry as string) & "\"/>"
 		--display dialog "writeLinkTo " & tag
 		writeLine(tag as string) of me
@@ -188,7 +197,8 @@ on writeCategoryLinkTo(tagName, theCategory)
 	local idString
 	if theCategory = missing value then return
 	tell application "Palm Desktop"
-		set tag to curIndent() of me & "<" & tagName & " xref=\"CategoryID" & (get id of theCategory as string) & "\"/>"
+		set idString to getIDForEntry(theEntry) of me
+		set tag to curIndent() of me & "<" & tagName & " xref=\"" & idString & "\"/>"
 		--display dialog "writeCategoryLinkTo " & tag
 		writeLine(tag as string) of me
 	end tell
@@ -196,8 +206,10 @@ end writeCategoryLinkTo
 
 on writeBeginEntry(tagName, theEntry)
 	local tag
+	local idString
 	tell application "Palm Desktop"
-		set tag to doIndent() of me & "<" & tagName & " xml:id=\"ID" & id of theEntry & "\">"
+		set idString to getIDForEntry(theEntry) of me
+		set tag to doIndent() of me & "<" & tagName & " xml:id=\"" & idString & "\">"
 		writeLine(tag) of me
 		--display dialog "writeBeginEntry " & tag
 		writePrimaryCategory(theEntry) of me
