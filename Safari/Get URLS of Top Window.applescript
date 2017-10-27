@@ -1,4 +1,5 @@
-(* © Joel Jones *)
+(* © Joel Jones joelkevinjones@gmail.com *)
+(* I need an open source license *)
 set theWinName to ""
 set URLs to ""
 tell application "System Events"
