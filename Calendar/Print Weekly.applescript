@@ -53,7 +53,8 @@ on clickIncrementor(thePath)
 		end tell
 	end tell
 end clickIncrementor
-on getTypeSignature(theRow)
+
+on getTypeSignature(theRow, rowNum)
 	local typeSignature
 	set typeSignature to {}
 	tell application "System Events"
@@ -70,20 +71,26 @@ on getTypeSignature(theRow)
 		set staticTextCount to 0
 		set groupCount to 0
 		set uiElementCount to 0
+		local elemsClassString
+		set elemsClassString to ""
 		repeat with theElem in items of rowContents
-			if "checkbox" is equal to (class of theElem) as string then
+			--set elemsClassString to elemsClassString & " " & ((class of theElem) as text)
+			if checkbox is equal to (class of theElem) then --«class sttx» 
 				set checkboxCount to 1
 			end if
-			if "static text" is equal to (class of theElem) as string then
+			if static text is equal to (class of theElem) then
 				set staticTextCount to 1
 			end if
-			if "group" is equal to (class of theElem) as string then
+			if group is equal to (class of theElem) then
 				set groupCount to 1
 			end if
-			if "UI element" is equal to (class of theElem) as string then
+			if UI element is equal to (class of theElem) then
 				set uiElementCount to 1
 			end if
 		end repeat
+		--if rowNum is equal to 34 then
+		--	display dialog ("elemsClassString: " & elemsClassString & " checkboxCount: " & --checkboxCount & " staticTextCount: " & staticTextCount & " groupCount: " & groupCount & --" uiElementCount: " & uiElementCount)
+		--end if
 		if groupCount is equal to 1 and uiElementCount is equal to 1 then
 			if checkboxCount is equal to 1 and staticTextCount is equal to 1 then
 				--return {groupCount:1, uiElementCount:1, checkboxCount:1, staticTextCount:1}
@@ -96,7 +103,7 @@ on getTypeSignature(theRow)
 			--return {checkboxCount:1, staticTextCount:1}
 			return "cBsT"
 		else
-			display dialog ("unrecognized rowContents 2 checkboxCount: " & checkboxCount & " staticTextCount: " & staticTextCount)
+			display dialog ("unrecognized rowContents 2 (" & rowNum & ") checkboxCount: " & checkboxCount & " staticTextCount: " & staticTextCount)
 		end if
 		--repeat with theElem in items of rowContents
 		--	set typeSignature to addToUITypes(typeSignature, class of theElem as string) of me
@@ -113,9 +120,11 @@ on selectCalsToPrint()
 		set theCal to application process "Calendar"
 		set printWin to window "Print" of theCal
 		--set uiTypeSignatures to {}
+		set rowNum to 0
 		repeat with theRow in rows of outline 1 of scroll area 1 of printWin
 			--set theRowType to rowType(getTypeSignature(theRow) of me) of me
-			set theRowType to getTypeSignature(theRow) of me
+			set rowNum to rowNum + 1
+			set theRowType to getTypeSignature(theRow, rowNum) of me
 			local theName
 			local thePath
 			set theName to ""
@@ -180,6 +189,12 @@ tell application "System Events"
 	clickIncrementor(button 2 of incrementor 1 of printWin) of me
 	
 	selectCalsToPrint() of me
+	
+	setCheckboxValue(checkbox "All-day events" of printWin, 1) of me
+	setCheckboxValue(checkbox "Mini calendar" of printWin, 1) of me
+	setCheckboxValue(checkbox "Calendar keys" of printWin, 1) of me
+	setCheckboxValue(checkbox "Black and white" of printWin, 0) of me
+	setPopupValue(pop up button 5 of printWin, "Medium") of me
 end tell
 
 -- Bummer. I accidentally overwrote the complete "Print Weekly" script with my
