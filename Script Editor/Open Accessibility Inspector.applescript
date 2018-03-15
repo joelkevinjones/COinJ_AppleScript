@@ -1,0 +1,1 @@
+do shell script "open  '/Applications/Xcode.app/Contents/Applications/Accessibility Inspector.app/'"
