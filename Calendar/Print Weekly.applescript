@@ -1,3 +1,12 @@
+(* Copyright 2018 Joel Jones, joelkevinjones@gmail.com *)
+
+-- TO DO;
+-- + Disable the "continue" button until the script finishes. Is this possible?
+-- + Modify specification of calls to print to include the calendar account, e.g. "commuting" => joelj@marvell.com:commuting"
+
+global calsToPrint
+set calsToPrint to {"Calendar", "teamjonesalameda@gmail.com", "US Holidays", "commuting"}
+
 on clickButton(thePath, theValue)
 	tell application "System Events"
 		tell thePath
@@ -112,9 +121,6 @@ on getTypeSignature(theRow, rowNum)
 	return typeSignature
 end getTypeSignature
 
-global calsToPrint
-set calsToPrint to {"Spelling Bee", "Calendar", "teamjonesalameda@gmail.com", "US Holidays"}
-
 on selectCalsToPrint()
 	tell application "System Events"
 		set theCal to application process "Calendar"
@@ -154,30 +160,33 @@ on openPrint(theCal)
 	end tell
 end openPrint
 
-tell application "Calendar"
-	local printNotOpen
-	set printNotOpen to false
-	activate
-	try
-		get window "Print"
-	on error errstr number errnum
-		if errnum is equal to -1728 then
-			set printNotOpen to true
-		else
-			display dialog errstr
+on ensurePrintOpen()
+	tell application "Calendar"
+		local printNotOpen
+		set printNotOpen to false
+		activate
+		try
+			get window "Print"
+		on error errstr number errnum
+			if errnum is equal to -1728 then
+				set printNotOpen to true
+			else
+				display dialog errstr
+			end if
+		end try
+		if printNotOpen or not visible of window "Print" then
+			tell application "System Events"
+				set theCal to application process "Calendar"
+				openPrint(theCal) of me
+			end tell
+			set visible of window "Print" to true
 		end if
-	end try
-	if printNotOpen or not visible of window "Print" then
-		tell application "System Events"
-			set theCal to application process "Calendar"
-			openPrint(theCal) of me
-		end tell
-		set visible of window "Print" to true
-	end if
-end tell
+	end tell
+end ensurePrintOpen
 
 tell application "System Events"
 	set theCal to application process "Calendar"
+	ensurePrintOpen() of me
 	set printWin to window "Print" of theCal
 	setPopupValue(pop up button "View:" of printWin, "Week") of me
 	setPopupValue(pop up button "Paper:" of printWin, "US Letter") of me
@@ -196,12 +205,3 @@ tell application "System Events"
 	setCheckboxValue(checkbox "Black and white" of printWin, 0) of me
 	setPopupValue(pop up button 5 of printWin, "Medium") of me
 end tell
-
--- Bummer. I accidentally overwrote the complete "Print Weekly" script with my
--- script to make sure the print dialog was open.
--- Here's what needs to be done
--- ExtractMethod -> ensurePrintDialogOpen
--- add code for setting view, Paper, Time range Starts, Time range Ends
--- add code for Options: All-day events, Mini Calendar, Calendar keys Black and white
--- add code for Text size
--- add code for Calendars
