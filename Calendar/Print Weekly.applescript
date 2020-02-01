@@ -1,4 +1,4 @@
-(* Copyright 2018 Joel Jones, joelkevinjones@gmail.com *)
+(* Copyright 2018-2019 Joel Jones, joelkevinjones@gmail.com *)
 
 -- TO DO;
 -- + Disable the "continue" button until the script finishes. Is this possible?
@@ -63,85 +63,21 @@ on clickIncrementor(thePath)
 	end tell
 end clickIncrementor
 
-on getTypeSignature(theRow, rowNum)
-	local typeSignature
-	set typeSignature to {}
-	tell application "System Events"
-		set rowContents to entire contents of theRow
-		if (count of rowContents) is equal to 0 then
-			--return {}
-			return "empty"
-		end if
-		local checkboxCount
-		local staticTextCount
-		local groupCount
-		local uiElementCount
-		set checkboxCount to 0
-		set staticTextCount to 0
-		set groupCount to 0
-		set uiElementCount to 0
-		local elemsClassString
-		set elemsClassString to ""
-		repeat with theElem in items of rowContents
-			--set elemsClassString to elemsClassString & " " & ((class of theElem) as text)
-			if checkbox is equal to (class of theElem) then --«class sttx» 
-				set checkboxCount to 1
-			end if
-			if static text is equal to (class of theElem) then
-				set staticTextCount to 1
-			end if
-			if group is equal to (class of theElem) then
-				set groupCount to 1
-			end if
-			if UI element is equal to (class of theElem) then
-				set uiElementCount to 1
-			end if
-		end repeat
-		--if rowNum is equal to 34 then
-		--	display dialog ("elemsClassString: " & elemsClassString & " checkboxCount: " & --checkboxCount & " staticTextCount: " & staticTextCount & " groupCount: " & groupCount & --" uiElementCount: " & uiElementCount)
-		--end if
-		if groupCount is equal to 1 and uiElementCount is equal to 1 then
-			if checkboxCount is equal to 1 and staticTextCount is equal to 1 then
-				--return {groupCount:1, uiElementCount:1, checkboxCount:1, staticTextCount:1}
-				return "grpUIcBsT"
-			else
-				display dialog "unrecognized rowContents 4"
-			end if
-		end if
-		if checkboxCount is equal to 1 and staticTextCount is equal to 1 then
-			--return {checkboxCount:1, staticTextCount:1}
-			return "cBsT"
-		else
-			display dialog ("unrecognized rowContents 2 (" & rowNum & ") checkboxCount: " & checkboxCount & " staticTextCount: " & staticTextCount)
-		end if
-		--repeat with theElem in items of rowContents
-		--	set typeSignature to addToUITypes(typeSignature, class of theElem as string) of me
-		--end repeat
-	end tell
-	return typeSignature
-end getTypeSignature
-
 on selectCalsToPrint()
 	tell application "System Events"
 		set theCal to application process "Calendar"
+		ensurePrintOpen() of me
 		set printWin to window "Print" of theCal
-		--set uiTypeSignatures to {}
-		set rowNum to 0
-		repeat with theRow in rows of outline 1 of scroll area 1 of printWin
-			--set theRowType to rowType(getTypeSignature(theRow) of me) of me
-			set rowNum to rowNum + 1
-			set theRowType to getTypeSignature(theRow, rowNum) of me
-			local theName
-			local thePath
-			set theName to ""
-			if theRowType is "cBsT" then
-				set theName to (name of item 1 of static text of theRow) as string
-				set thePath to checkbox 1 of theRow
-			end if
-			if theRowType is "grpUIcBsT" then
-				set theName to name of static text of theRow
-				set thePath to checkbox 1 of group 1 of theRow
-			end if
+		local potentialMatchRows
+		set potentialMatchRows to {}
+		tell outline 1 of scroll area 1 of printWin
+			set potentialMatchRows to every row whose (class of first UI element) = checkbox and (class of second UI element) = static text
+		end tell
+		local theName
+		local thePath
+		repeat with theRow in potentialMatchRows
+			set theName to (name of item 1 of static text of theRow)
+			set thePath to checkbox 1 of theRow
 			if theName is not equal to "" then
 				if theName is in calsToPrint then
 					set desiredValue to 1
@@ -185,6 +121,8 @@ on ensurePrintOpen()
 end ensurePrintOpen
 
 tell application "System Events"
+	local textSizeButtonList
+	local textSizeButton
 	set theCal to application process "Calendar"
 	ensurePrintOpen() of me
 	set printWin to window "Print" of theCal
@@ -203,5 +141,7 @@ tell application "System Events"
 	setCheckboxValue(checkbox "Mini calendar" of printWin, 1) of me
 	setCheckboxValue(checkbox "Calendar keys" of printWin, 1) of me
 	setCheckboxValue(checkbox "Black and white" of printWin, 0) of me
-	setPopupValue(pop up button 5 of printWin, "Medium") of me
+	set textSizeButtonList to pop up buttons of printWin whose value is "Small" or value is "Medium" or value is "Big"
+	set textSizeButton to first item of textSizeButtonList
+	setPopupValue(textSizeButton, "Medium") of me
 end tell
